@@ -1,0 +1,12 @@
+[package]
+name = "suicide-rs"
+description = "A super simple crate for printing an error message when something terrible goes wrong and nothing can be done to recover."
+version = "1.0.0"
+edition = "2024"
+repository = "https://github.com/BulmasArmpitSweat/suicide-rs.git"
+license = "MIT"
+
+[dependencies]
+errno = "0.3.11"
+inline_colorization = "0.1.6"
+linux-errnos = "0.4.0"
