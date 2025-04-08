@@ -1,20 +1,30 @@
-use inline_colorization::*;
-use std::fmt::Write;
+//! # suicide-rs
+//! 
+//! This crate allows you to crash a program with fancy output. That's it.
+//! 
+//! 
+#![no_std]
 
-#[inline]
+extern crate inline_colorization;
+extern crate errno;
+extern crate tinyvec_string;
+
+use inline_colorization::*;
+use core::fmt::Write;
+
+#[inline(always)]
 #[should_panic]
-fn _die(code: linux_errnos::x86_64::Errno, colour: &str, args: std::fmt::Arguments) -> ! {
-    let errno_code: i32 = code.into_raw();
-    errno::set_errno(errno::Errno(errno_code));
-    let mut output = String::new();
+fn _die(code: i32, colour: &str, args: core::fmt::Arguments) -> ! {
+    errno::set_errno(errno::Errno(code));
+    let mut output: tinyvec_string::tinystring::TinyString<[u8; 32]> = tinyvec_string::tinystring::TinyString::new();
     output.write_fmt(args).unwrap();
     panic!(
         "{style_bold}{}[ ERROR ({}:{}) ]: {}: {}, {}{style_reset}{color_reset}",
         colour,
         file!(),
         line!(),
-        errno_code,
-        code.name().unwrap_or("(none)"),
+        code,
+        errno::errno(),
         output
     );
 }
@@ -24,12 +34,18 @@ fn _die(code: linux_errnos::x86_64::Errno, colour: &str, args: std::fmt::Argumen
 /// Like panic, but automatically sets the errno to the code and exits with extra information for your bittersweet pleasure
 /// You can thank me later.
 ///
+/// Internally, this macro is a wrapper for a function that uses
+/// `tinyvec_string::tinystring::TinyString<A>` internally, allowing for a passed
+/// string to be heap-allocated up to 32 characters long, before falling back to the heap.
+/// 
 /// # Usage
 /// ```rust
-/// let Errno: linux_errnos::x86_64::Errno = linux_errnos::x86_64::Errno::EINVAL; // Uses linux_errnos crate for errnos
-/// let Colour: &str = inline_colorization::color_red; // Uses inline_colorization crate for colours
+/// // Syntax: die!(i32, &str, format_args!(&str, ...));
+/// 
+/// let Errno: linux_errnos::x86_64::Errno = linux_errnos::x86_64::Errno::EINVAL; // This example uses the linux_errnos crate, but function uses raw i32, so any implementation will work
+/// let Colour: &str = inline_colorization::color_red; // This example uses the inline_colorization crate, but function uses &str, so any implementation will work
 /// let Msg: &str = "It is good day to be not dead!";
-/// die!(Errno, Colour, Msg);
+/// die!(Errno.into_raw(), Colour, Msg);
 /// unreachable!("You are dead!");
 /// ```
 ///
@@ -44,14 +60,15 @@ fn _die(code: linux_errnos::x86_64::Errno, colour: &str, args: std::fmt::Argumen
 /// ```
 #[macro_export]
 macro_rules! die {
-    ($code:ident, $colour:ident, $($arg:tt)*) => {
-        $crate::_die(linux_errnos::x86_64::Errno::$code, inline_colorization::$colour, format_args!($($arg)*))
+    ($code:expr, $colour:expr, $($arg:tt)*) => {
+        $crate::_die($code, $colour, format_args!($($arg)*))
     };
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use linux_errnos::x86_64::Errno;
 
     #[test]
     #[should_panic]
@@ -59,7 +76,7 @@ mod tests {
         let val1: u8 = 10;
         let val2: u8 = 20;
         if (val1 + val2) != 35 {
-            die!(EINVAL, color_red, "It is good day to be not dead!");
+            die!(Errno::EINVAL.into_raw(), inline_colorization::color_red, "It is good day to be not dead!");
         }
         unreachable!("You are dead!");
     }
