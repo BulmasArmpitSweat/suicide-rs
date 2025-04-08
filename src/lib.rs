@@ -4,36 +4,8 @@
 //! 
 //! 
 #![no_std]
-
-extern crate inline_colorization;
-extern crate errno;
-extern crate tinyvec_string;
-extern crate print_no_std;
-extern crate exit_no_std;
-
-use inline_colorization::*;
-use core::fmt::Write;
-
-#[inline(always)]
-#[should_panic]
-fn _die(code: i32, colour: &str, args: core::fmt::Arguments) -> ! {
-    errno::set_errno(errno::Errno(code));
-    let mut output: tinyvec_string::tinystring::TinyString<[u8; 32]> = tinyvec_string::tinystring::TinyString::new();
-    output.write_fmt(args).unwrap();
-    // A1-Triard, my saviour: https://crates.io/users/A1-Triard
-    // Thanks you for the so useful print_no_std and exit_no_std
-    // I'm gonna suck your di-
-    print_no_std::println!(
-        "{style_bold}{}[ ERROR ({}:{}) ]: Errno num. {}: {} | {}{style_reset}{color_reset}",
-        colour,
-        file!(),
-        line!(),
-        code,
-        errno::errno(),
-        output
-    );
-    exit_no_std::exit(u8::MAX);
-}
+#[doc(hidden)]
+pub mod internal;
 
 /// Abort program with fancy output
 ///
@@ -46,28 +18,32 @@ fn _die(code: i32, colour: &str, args: core::fmt::Arguments) -> ! {
 /// 
 /// # Usage
 /// ```rust
+/// extern crate suicide_rs; 
+///
 /// // Syntax: die!(i32, &str, format_args!(&str, ...));
 /// 
 /// let Errno: linux_errnos::x86_64::Errno = linux_errnos::x86_64::Errno::EINVAL; // This example uses the linux_errnos crate, but function uses raw i32, so any implementation will work
 /// let Colour: &str = inline_colorization::color_red; // This example uses the inline_colorization crate, but function uses &str, so any implementation will work
 /// let Msg: &str = "It is good day to be not dead!";
-/// die!(Errno.into_raw(), Colour, Msg);
+/// suicide_rs::die!(Errno.into_raw(), Colour, Msg);
 /// unreachable!("You are dead!");
 /// ```
 ///
 /// # Example
 /// ```rust
+/// extern crate suicide_rs;
+/// 
 /// let val1: u8 = 10;
 /// let val2: u8 = 20;
 /// if (val1 + val2) != 35 {
-///     die!(EINVAL, color_red, "It is good day to be not dead!");
+///     suicide_rs::die!(EINVAL, color_red, "It is good day to be not dead!");
 /// }
 /// unreachable!("You are dead!");
 /// ```
 #[macro_export]
 macro_rules! die {
     ($code:expr, $colour:expr, $($arg:tt)*) => {
-        $crate::_die($code, $colour, format_args!($($arg)*))
+        $crate::internal::_die($code, $colour, format_args!($($arg)*))
     };
 }
 
