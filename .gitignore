@@ -9,6 +9,9 @@ target/
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
+# Cargo.lock is local cache and is not needed in GitHub code listing, as attempting to compile will generate it anyway
+Cargo.lock
+
 # RustRover
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
