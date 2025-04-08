@@ -24,7 +24,7 @@ fn _die(code: i32, colour: &str, args: core::fmt::Arguments) -> ! {
     // Thanks you for the so useful print_no_std and exit_no_std
     // I'm gonna suck your di-
     print_no_std::println!(
-        "{style_bold}{}[ ERROR ({}:{}) ]: {}: {}, {}{style_reset}{color_reset}",
+        "{style_bold}{}[ ERROR ({}:{}) ]: Errno num. {}: {} | {}{style_reset}{color_reset}",
         colour,
         file!(),
         line!(),
