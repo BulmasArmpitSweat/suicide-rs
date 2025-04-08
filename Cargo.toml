@@ -13,6 +13,8 @@ license = "MIT"
 errno = "0.3.11"
 inline_colorization = "0.1.6"
 tinyvec_string = { version = "0.3.2", features = ["alloc"] }
+print-no-std = "0.2.1"
+exit-no-std = "0.2.1"
 
 [dev-dependencies]
 linux-errnos = "0.4.0"
